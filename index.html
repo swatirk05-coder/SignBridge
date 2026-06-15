@@ -1,0 +1,1541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SignBridge — Sign Language Interpreter</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sky: #e8f4ff;
+    --sky2: #d0eaff;
+    --mint: #d6f5ee;
+    --peach: #ffe8d6;
+    --lavender: #ede8ff;
+    --yellow: #fff8d6;
+    --primary: #3b82f6;
+    --primary-dark: #2563eb;
+    --teal: #14b8a6;
+    --teal-light: #99f6e4;
+    --coral: #f97316;
+    --purple: #8b5cf6;
+    --pink: #ec4899;
+    --green: #22c55e;
+    --text: #1e293b;
+    --text-soft: #64748b;
+    --white: #ffffff;
+    --card-shadow: 0 8px 32px rgba(59,130,246,0.10);
+    --card-shadow-hover: 0 16px 48px rgba(59,130,246,0.18);
+    --radius: 24px;
+    --radius-sm: 14px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--sky);
+    color: var(--text);
+    font-family: 'Nunito', sans-serif;
+    font-weight: 500;
+    overflow-x: hidden;
+  }
+
+
+  .blob-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.35;
+  }
+  .blob-1 { width: 600px; height: 600px; background: #93c5fd; top: -200px; left: -200px; animation: blobFloat 14s ease-in-out infinite alternate; }
+  .blob-2 { width: 500px; height: 500px; background: #6ee7b7; top: 20%; right: -150px; animation: blobFloat 18s ease-in-out infinite alternate-reverse; }
+  .blob-3 { width: 400px; height: 400px; background: #c4b5fd; bottom: 10%; left: 10%; animation: blobFloat 16s ease-in-out infinite alternate; }
+  .blob-4 { width: 300px; height: 300px; background: #fda4af; bottom: 0; right: 20%; animation: blobFloat 12s ease-in-out infinite alternate-reverse; }
+
+  @keyframes blobFloat {
+    from { transform: translate(0,0) scale(1); }
+    to   { transform: translate(40px,30px) scale(1.08); }
+  }
+
+
+  nav {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 100;
+    padding: 1rem 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255,255,255,0.75);
+    backdrop-filter: blur(20px);
+    border-bottom: 1.5px solid rgba(59,130,246,0.1);
+  }
+
+  .nav-logo {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.7rem;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+  }
+  .nav-logo .logo-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--primary), var(--teal));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    box-shadow: 0 4px 14px rgba(59,130,246,0.3);
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 0.25rem;
+    list-style: none;
+    align-items: center;
+  }
+  .nav-links a {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-soft);
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    transition: all 0.2s;
+  }
+  .nav-links a:hover { background: var(--sky2); color: var(--primary); }
+
+  .nav-btn {
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 800;
+    padding: 0.6rem 1.5rem;
+    background: linear-gradient(135deg, var(--primary), var(--teal));
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(59,130,246,0.3);
+    transition: all 0.3s;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .nav-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(59,130,246,0.4); }
+
+
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8rem 4rem 4rem;
+    position: relative;
+    z-index: 1;
+    gap: 3rem;
+  }
+
+  .hero-text { flex: 1; max-width: 560px; }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--white);
+    border: 2px solid rgba(59,130,246,0.2);
+    border-radius: 50px;
+    padding: 0.4rem 1rem;
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: var(--primary);
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 12px rgba(59,130,246,0.12);
+    animation: fadeDown 0.7s ease forwards;
+  }
+
+  .hero-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2.8rem, 6vw, 4.5rem);
+    line-height: 1.1;
+    color: var(--text);
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.7s 0.1s ease both;
+  }
+  .hero-title .highlight {
+    background: linear-gradient(135deg, var(--primary), var(--teal));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-desc {
+    font-size: 1.05rem;
+    color: var(--text-soft);
+    line-height: 1.8;
+    margin-bottom: 2.5rem;
+    animation: fadeUp 0.7s 0.2s ease both;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    animation: fadeUp 0.7s 0.3s ease both;
+  }
+
+  .btn-big {
+    font-family: 'Nunito', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    padding: 0.9rem 2rem;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .btn-big.primary {
+    background: linear-gradient(135deg, var(--primary), var(--teal));
+    color: #fff;
+    border: none;
+    box-shadow: 0 6px 20px rgba(59,130,246,0.35);
+  }
+  .btn-big.primary:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(59,130,246,0.45); }
+  .btn-big.outline {
+    background: var(--white);
+    color: var(--primary);
+    border: 2px solid rgba(59,130,246,0.3);
+    box-shadow: var(--card-shadow);
+  }
+  .btn-big.outline:hover { border-color: var(--primary); transform: translateY(-2px); }
+
+  .hero-visual {
+    flex: 1;
+    max-width: 500px;
+    animation: fadeUp 0.7s 0.2s ease both;
+  }
+
+  .app-mockup {
+    background: var(--white);
+    border-radius: 32px;
+    padding: 1.5rem;
+    box-shadow: 0 24px 80px rgba(59,130,246,0.15), 0 0 0 1px rgba(59,130,246,0.08);
+    position: relative;
+  }
+
+  .mockup-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+
+  .mockup-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--green);
+    background: #dcfce7;
+    border-radius: 50px;
+    padding: 0.25rem 0.75rem;
+  }
+  .live-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: livePulse 1.4s ease infinite;
+  }
+  @keyframes livePulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.7)} }
+
+  .camera-view {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border-radius: 20px;
+    aspect-ratio: 4/3;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .camera-hand {
+    font-size: 5rem;
+    filter: drop-shadow(0 0 20px rgba(59,130,246,0.5));
+    animation: handFloat 3s ease-in-out infinite;
+  }
+  @keyframes handFloat {
+    0%,100%{transform:translateY(0) rotate(-5deg)} 50%{transform:translateY(-12px) rotate(5deg)}
+  }
+
+  .camera-scan {
+    position: absolute;
+    left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, rgba(59,130,246,0.8), var(--teal), rgba(59,130,246,0.8), transparent);
+    animation: cameraScan 2.5s ease-in-out infinite;
+    box-shadow: 0 0 20px rgba(20,184,166,0.6);
+  }
+  @keyframes cameraScan {
+    0%{top:15%} 100%{top:85%}
+  }
+
+  .cam-corner { position: absolute; width: 22px; height: 22px; }
+  .cam-corner.tl { top: 12px; left: 12px; border-top: 3px solid var(--teal); border-left: 3px solid var(--teal); border-radius: 4px 0 0 0; }
+  .cam-corner.tr { top: 12px; right: 12px; border-top: 3px solid var(--teal); border-right: 3px solid var(--teal); border-radius: 0 4px 0 0; }
+  .cam-corner.bl { bottom: 12px; left: 12px; border-bottom: 3px solid var(--teal); border-left: 3px solid var(--teal); border-radius: 0 0 0 4px; }
+  .cam-corner.br { bottom: 12px; right: 12px; border-bottom: 3px solid var(--teal); border-right: 3px solid var(--teal); border-radius: 0 0 4px 0; }
+
+  .detected-label {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 50px;
+    padding: 0.3rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #fff;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .conf-bar {
+    width: 50px;
+    height: 4px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .conf-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--teal), #6ee7b7);
+    border-radius: 10px;
+    width: 0%;
+    transition: width 0.6s ease;
+  }
+
+  .translation-box {
+    background: var(--sky);
+    border-radius: 16px;
+    padding: 1rem 1.2rem;
+    margin-bottom: 1rem;
+    min-height: 70px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border: 1.5px solid rgba(59,130,246,0.12);
+  }
+
+  .translation-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--primary), var(--teal));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
+  .translation-text {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+    flex: 1;
+  }
+  .translation-text .word {
+    display: inline-block;
+    animation: wordPop 0.4s ease both;
+  }
+  @keyframes wordPop {
+    from { opacity:0; transform: scale(0.8) translateY(4px); }
+    to { opacity:1; transform: none; }
+  }
+
+  .mockup-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+  .mock-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.65rem;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    font-family: 'Nunito', sans-serif;
+  }
+  .mock-btn.speak { background: linear-gradient(135deg, var(--primary), var(--teal)); color: #fff; box-shadow: 0 4px 14px rgba(59,130,246,0.3); }
+  .mock-btn.speak:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(59,130,246,0.4); }
+  .mock-btn.copy { background: var(--sky); color: var(--primary); border: 1.5px solid rgba(59,130,246,0.2); }
+  .mock-btn.copy:hover { background: var(--sky2); }
+
+
+  .hero-chips {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .chip {
+    position: absolute;
+    background: var(--white);
+    border-radius: 50px;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 800;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    animation: chipFloat 6s ease-in-out infinite;
+  }
+  .chip-1 { top: 5%; left: -10%; color: var(--coral); animation-delay: 0s; }
+  .chip-2 { top: 35%; right: -8%; color: var(--purple); animation-delay: 1.5s; }
+  .chip-3 { bottom: 18%; left: -12%; color: var(--teal); animation-delay: 3s; }
+  @keyframes chipFloat {
+    0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)}
+  }
+
+  
+  section { position: relative; z-index: 1; }
+
+  .section-wrap { padding: 5rem 4rem; }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 3.5rem;
+  }
+
+  .section-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--white);
+    border-radius: 50px;
+    padding: 0.35rem 1rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    box-shadow: var(--card-shadow);
+  }
+
+  .section-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2rem, 4vw, 3rem);
+    color: var(--text);
+    line-height: 1.15;
+    margin-bottom: 0.75rem;
+  }
+  .section-title .hl { background: linear-gradient(135deg, var(--primary), var(--teal)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+  .section-sub {
+    font-size: 1rem;
+    color: var(--text-soft);
+    max-width: 560px;
+    margin: 0 auto;
+    line-height: 1.8;
+  }
+
+
+  .how-bg { background: var(--white); }
+
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+  }
+
+  .step-card {
+    background: var(--sky);
+    border-radius: var(--radius);
+    padding: 2rem 1.5rem;
+    text-align: center;
+    position: relative;
+    border: 2px solid transparent;
+    transition: all 0.3s;
+  }
+  .step-card:hover { border-color: rgba(59,130,246,0.3); transform: translateY(-6px); box-shadow: var(--card-shadow-hover); }
+
+  .step-num {
+    position: absolute;
+    top: 1.2rem;
+    right: 1.2rem;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .step-emoji {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    display: block;
+    line-height: 1;
+  }
+
+  .step-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.2rem;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+
+  .step-desc {
+    font-size: 0.88rem;
+    color: var(--text-soft);
+    line-height: 1.7;
+  }
+
+  .steps-connector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 3rem;
+    color: var(--text-soft);
+    font-size: 1.5rem;
+    pointer-events: none;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+
+  .feature-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 2rem;
+    border: 2px solid rgba(59,130,246,0.08);
+    transition: all 0.3s;
+    cursor: default;
+  }
+  .feature-card:hover { border-color: rgba(59,130,246,0.25); transform: translateY(-5px); box-shadow: var(--card-shadow-hover); }
+
+  .feature-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .feature-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.2rem;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+
+  .feature-desc {
+    font-size: 0.88rem;
+    color: var(--text-soft);
+    line-height: 1.75;
+  }
+
+
+  .demo-bg { background: var(--white); }
+
+  .demo-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: start;
+  }
+
+  .demo-left {}
+
+  .alphabet-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .alpha-btn {
+    aspect-ratio: 1;
+    border-radius: 12px;
+    border: 2px solid rgba(59,130,246,0.15);
+    background: var(--sky);
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Nunito', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .alpha-btn:hover, .alpha-btn.active {
+    background: linear-gradient(135deg, var(--primary), var(--teal));
+    color: #fff;
+    border-color: transparent;
+    transform: scale(1.08);
+    box-shadow: 0 4px 14px rgba(59,130,246,0.3);
+  }
+
+  .phrase-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .phrase-btn {
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 800;
+    padding: 0.4rem 1rem;
+    border-radius: 50px;
+    border: 2px solid rgba(59,130,246,0.2);
+    background: var(--sky);
+    color: var(--primary);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .phrase-btn:hover {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+    transform: translateY(-2px);
+  }
+
+  .demo-output {
+    background: var(--sky);
+    border-radius: var(--radius);
+    padding: 2rem;
+    border: 2px solid rgba(59,130,246,0.12);
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .demo-output-label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--text-soft);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .demo-output-text {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2rem;
+    color: var(--text);
+    line-height: 1.3;
+    min-height: 80px;
+    word-break: break-word;
+  }
+
+  .demo-actions-row {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  .demo-action-btn {
+    flex: 1;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 800;
+    padding: 0.65rem 0.5rem;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+  }
+  .demo-action-btn.speak-btn { background: linear-gradient(135deg, var(--primary), var(--teal)); color: #fff; box-shadow: 0 4px 14px rgba(59,130,246,0.3); }
+  .demo-action-btn.speak-btn:hover { transform: translateY(-2px); }
+  .demo-action-btn.clear-btn { background: var(--white); color: var(--text-soft); border: 1.5px solid rgba(0,0,0,0.1); }
+  .demo-action-btn.clear-btn:hover { color: var(--coral); border-color: var(--coral); }
+
+  .demo-right {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .sign-display {
+    background: var(--sky);
+    border-radius: var(--radius);
+    padding: 2rem;
+    text-align: center;
+    border: 2px solid rgba(59,130,246,0.12);
+    min-height: 260px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .sign-emoji {
+    font-size: 5rem;
+    line-height: 1;
+    animation: signBounce 0.5s ease;
+    display: block;
+  }
+  @keyframes signBounce { from{transform:scale(0.5);opacity:0} 70%{transform:scale(1.1)} to{transform:scale(1);opacity:1} }
+
+  .sign-letter {
+    font-family: 'Fredoka One', cursive;
+    font-size: 5rem;
+    background: linear-gradient(135deg, var(--primary), var(--teal));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    animation: signBounce 0.5s ease;
+    display: block;
+  }
+
+  .sign-name {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--text-soft);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .sign-placeholder {
+    color: var(--text-soft);
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .asl-info-card {
+    background: linear-gradient(135deg, var(--primary), var(--teal));
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    color: #fff;
+  }
+
+  .asl-info-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .asl-facts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .asl-fact {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    opacity: 0.9;
+  }
+
+
+  .lang-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+  }
+
+  .lang-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 1.8rem 1.5rem;
+    text-align: center;
+    border: 2px solid rgba(59,130,246,0.08);
+    transition: all 0.3s;
+    cursor: default;
+  }
+  .lang-card:hover { border-color: rgba(59,130,246,0.25); transform: translateY(-5px); box-shadow: var(--card-shadow-hover); }
+
+  .lang-flag { font-size: 2.5rem; margin-bottom: 0.75rem; display: block; }
+  .lang-name { font-family: 'Fredoka One', cursive; font-size: 1.15rem; color: var(--text); margin-bottom: 0.25rem; }
+  .lang-users { font-size: 0.8rem; font-weight: 700; color: var(--text-soft); }
+  .lang-tag { display: inline-block; margin-top: 0.75rem; font-size: 0.72rem; font-weight: 800; padding: 0.25rem 0.75rem; border-radius: 50px; }
+
+
+  .testimonials-bg { background: var(--white); }
+
+  .testimonials-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+
+  .testimonial-card {
+    background: var(--sky);
+    border-radius: var(--radius);
+    padding: 2rem;
+    border: 2px solid rgba(59,130,246,0.08);
+    transition: all 0.3s;
+  }
+  .testimonial-card:hover { border-color: rgba(59,130,246,0.25); box-shadow: var(--card-shadow-hover); }
+
+  .stars { font-size: 1rem; margin-bottom: 1rem; letter-spacing: 0.05em; }
+
+  .testimonial-text {
+    font-size: 0.92rem;
+    color: var(--text);
+    line-height: 1.8;
+    margin-bottom: 1.5rem;
+    font-style: italic;
+  }
+
+  .testimonial-author {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .author-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+  }
+
+  .author-name { font-weight: 800; font-size: 0.9rem; color: var(--text); }
+  .author-role { font-size: 0.78rem; color: var(--text-soft); font-weight: 600; }
+
+  
+  .cta-section {
+    padding: 5rem 4rem;
+    text-align: center;
+  }
+
+  .cta-card {
+    background: linear-gradient(135deg, var(--primary) 0%, #0ea5e9 40%, var(--teal) 100%);
+    border-radius: 40px;
+    padding: 5rem 3rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 24px 80px rgba(59,130,246,0.3);
+  }
+
+  .cta-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  .cta-emoji { font-size: 4rem; display: block; margin-bottom: 1rem; position: relative; z-index: 1; animation: handFloat 3s ease-in-out infinite; }
+  .cta-title { font-family: 'Fredoka One', cursive; font-size: clamp(2rem, 5vw, 3.5rem); color: #fff; margin-bottom: 1rem; position: relative; z-index: 1; }
+  .cta-sub { font-size: 1rem; color: rgba(255,255,255,0.85); max-width: 500px; margin: 0 auto 2.5rem; line-height: 1.8; position: relative; z-index: 1; }
+
+  .cta-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; position: relative; z-index: 1; }
+
+  .btn-white {
+    font-family: 'Nunito', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    padding: 0.9rem 2rem;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    background: var(--white);
+    color: var(--primary);
+    border: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  }
+  .btn-white:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+
+  .btn-ghost {
+    font-family: 'Nunito', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    padding: 0.9rem 2rem;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    border: 2px solid rgba(255,255,255,0.4);
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.25); transform: translateY(-2px); }
+
+ 
+  footer {
+    background: var(--white);
+    border-top: 1.5px solid rgba(59,130,246,0.1);
+    padding: 3rem 4rem 2rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .footer-inner {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 3rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .footer-brand {}
+  .footer-logo-wrap {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.5rem;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    text-decoration: none;
+  }
+  .footer-logo-icon {
+    width: 34px; height: 34px;
+    background: linear-gradient(135deg, var(--primary), var(--teal));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+  }
+  .footer-brand-desc {
+    font-size: 0.88rem;
+    color: var(--text-soft);
+    line-height: 1.75;
+    max-width: 260px;
+    margin-bottom: 1.2rem;
+  }
+  .footer-socials {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .social-btn {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: var(--sky);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    border: 1.5px solid rgba(59,130,246,0.1);
+  }
+  .social-btn:hover { background: var(--primary); transform: translateY(-2px); }
+
+  .footer-col-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    color: var(--text);
+    margin-bottom: 1rem;
+  }
+  .footer-links {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .footer-links a {
+    font-size: 0.88rem;
+    color: var(--text-soft);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .footer-links a:hover { color: var(--primary); }
+
+  .footer-bottom {
+    border-top: 1.5px solid rgba(59,130,246,0.08);
+    padding-top: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    color: var(--text-soft);
+    font-weight: 600;
+  }
+
+ 
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--white);
+    border-radius: 50px;
+    padding: 0.8rem 1.5rem;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    border: 1.5px solid rgba(59,130,246,0.15);
+    z-index: 9999;
+    opacity: 0;
+    transition: all 0.4s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+
+  .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .reveal.visible { opacity: 1; transform: none; }
+
+ 
+  @keyframes fadeDown { from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:none} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:none} }
+
+  @media (max-width: 1024px) {
+    nav { padding: 1rem 2rem; }
+    .hero { padding: 7rem 2rem 3rem; flex-direction: column; text-align: center; }
+    .hero-actions { justify-content: center; }
+    .hero-visual { max-width: 400px; }
+    .section-wrap { padding: 4rem 2rem; }
+    .steps-grid { grid-template-columns: 1fr 1fr; }
+    .features-grid { grid-template-columns: 1fr 1fr; }
+    .demo-container { grid-template-columns: 1fr; }
+    .lang-grid { grid-template-columns: 1fr 1fr; }
+    .testimonials-grid { grid-template-columns: 1fr 1fr; }
+    .footer-inner { grid-template-columns: 1fr 1fr; }
+    .cta-section { padding: 4rem 2rem; }
+    footer { padding: 3rem 2rem 2rem; }
+  }
+
+  @media (max-width: 768px) {
+    nav { padding: 0.8rem 1.5rem; }
+    .nav-links { display: none; }
+    .hero { padding: 6rem 1.5rem 3rem; }
+    .section-wrap { padding: 3rem 1.5rem; }
+    .steps-grid { grid-template-columns: 1fr; }
+    .features-grid { grid-template-columns: 1fr; }
+    .lang-grid { grid-template-columns: 1fr 1fr; }
+    .testimonials-grid { grid-template-columns: 1fr; }
+    .footer-inner { grid-template-columns: 1fr; gap: 2rem; }
+    .footer-bottom { flex-direction: column; gap: 1rem; text-align: center; }
+    .cta-section { padding: 3rem 1.5rem; }
+    footer { padding: 2.5rem 1.5rem 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+
+<div class="blob-bg">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="blob blob-4"></div>
+</div>
+
+
+<nav>
+  <a class="nav-logo" href="#">
+    <div class="logo-icon">🤟</div>
+    SignBridge
+  </a>
+  <ul class="nav-links">
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#demo">Try It</a></li>
+    <li><a href="#languages">Languages</a></li>
+    <li><a href="#testimonials">Stories</a></li>
+  </ul>
+  <a href="#demo" class="nav-btn">🚀 Try Free</a>
+</nav>
+
+
+<section>
+  <div class="hero">
+    <div class="hero-text">
+      <h1 class="hero-title">
+        Talk with your hands,<br>
+        <span class="highlight">we'll translate</span> the words
+      </h1>
+      <p class="hero-desc">
+        SignBridge is a friendly, real-time sign language interpreter powered by AI. Point your camera, make a sign, and watch your message come to life — instantly.
+      </p>
+      <div class="hero-actions">
+        <a href="#demo" class="btn-big primary">🤟 Start Signing Free</a>
+        <a href="#how" class="btn-big outline">▶ See How It Works</a>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="app-mockup">
+        <div class="mockup-header">
+          <div class="mockup-title">🤟 SignBridge</div>
+          <div class="live-badge">
+            <div class="live-dot"></div> LIVE
+          </div>
+        </div>
+
+        <div class="camera-view">
+          <div class="camera-hand" id="heroHand">🤟</div>
+          <div class="camera-scan"></div>
+          <div class="cam-corner tl"></div>
+          <div class="cam-corner tr"></div>
+          <div class="cam-corner bl"></div>
+          <div class="cam-corner br"></div>
+          <div class="detected-label">
+            ✅ Sign detected
+            <div class="conf-bar"><div class="conf-fill" id="confFill"></div></div>
+          </div>
+        </div>
+
+        <div class="translation-box">
+          <div class="translation-icon">💬</div>
+          <div class="translation-text" id="heroTranslation">
+            <span class="word">Hello,</span>
+            <span class="word" style="animation-delay:0.1s"> how</span>
+            <span class="word" style="animation-delay:0.2s"> are</span>
+            <span class="word" style="animation-delay:0.3s"> you?</span>
+          </div>
+        </div>
+
+        <div class="mockup-actions">
+          <button class="mock-btn speak" onclick="showToast('🔊 Speaking your message!')">🔊 Speak Aloud</button>
+          <button class="mock-btn copy" onclick="showToast('✅ Copied to clipboard!')">📋 Copy Text</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section id="how" class="how-bg">
+  <div class="section-wrap">
+    <div class="section-header reveal">
+      <div class="section-tag" style="color:var(--teal)">🪄 Simple as 1-2-3</div>
+      <h2 class="section-title">How <span class="hl">SignBridge</span> works</h2>
+      <p class="section-sub">No special equipment, no training needed. Just your hands, a camera, and a little magic.</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card reveal">
+        <div class="step-num">1</div>
+        <span class="step-emoji">📷</span>
+        <div class="step-title">Open Camera</div>
+        <p class="step-desc">Open SignBridge in any browser and allow camera access. Works on phones, tablets, and laptops — no app download required.</p>
+      </div>
+      <div class="step-card reveal" style="transition-delay:0.1s">
+        <div class="step-num">2</div>
+        <span class="step-emoji">🤙</span>
+        <div class="step-title">Make a Sign</div>
+        <p class="step-desc">Place your hands in view and sign naturally. Our AI model tracks 21 hand landmarks per hand at 30 frames per second.</p>
+      </div>
+      <div class="step-card reveal" style="transition-delay:0.2s">
+        <div class="step-num">3</div>
+        <span class="step-emoji">⚡</span>
+        <div class="step-title">Instant Translation</div>
+        <p class="step-desc">Watch the translation appear in real-time. Context-aware AI strings signs into complete, natural sentences — not just isolated words.</p>
+      </div>
+      <div class="step-card reveal" style="transition-delay:0.3s">
+        <div class="step-num">4</div>
+        <span class="step-emoji">🔊</span>
+        <div class="step-title">Speak or Share</div>
+        <p class="step-desc">Send the text, have it spoken aloud, copy it to another app, or export a transcript. Your words, your way.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section id="features">
+  <div class="section-wrap">
+    <div class="section-header reveal">
+      <div class="section-tag" style="color:var(--purple)">🌟 Everything you need</div>
+      <h2 class="section-title">Packed with <span class="hl">friendly features</span></h2>
+      <p class="section-sub">Designed for daily life — fast, private, and truly accessible for everyone.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card reveal">
+        <div class="feature-icon" style="background:#dbeafe">⚡</div>
+        <div class="feature-title">Real-Time Detection</div>
+        <p class="feature-desc">Sub-100ms latency using on-device AI. Your signs are recognized before you even finish making them, creating a truly fluid conversation flow.</p>
+      </div>
+      <div class="feature-card reveal" style="transition-delay:0.08s">
+        <div class="feature-icon" style="background:#d1fae5">🧠</div>
+        <div class="feature-title">Context-Aware AI</div>
+        <p class="feature-desc">Goes beyond gesture-by-gesture detection. Our language model understands full sentences, grammar rules, and common idioms in sign language.</p>
+      </div>
+      <div class="feature-card reveal" style="transition-delay:0.16s">
+        <div class="feature-icon" style="background:#ede9fe">🔒</div>
+        <div class="feature-title">100% Private</div>
+        <p class="feature-desc">All processing happens on your device. Your camera feed is never sent to our servers. What you sign stays with you, always.</p>
+      </div>
+      <div class="feature-card reveal" style="transition-delay:0.24s">
+        <div class="feature-icon" style="background:#fce7f3">🌍</div>
+        <div class="feature-title">Sign Languages</div>
+        <p class="feature-desc">Supports ASL, BSL, ISL, Auslan, LSF, DGS and more. Easily switch between languages with a single tap from the language selector.</p>
+      </div>
+      <div class="feature-card reveal" style="transition-delay:0.32s">
+        <div class="feature-icon" style="background:#fef3c7">🔊</div>
+        <div class="feature-title">Voice Output</div>
+        <p class="feature-desc">Translated text can be spoken aloud instantly using natural-sounding text-to-speech in over 40 voices and accents. Great for face-to-face conversations.</p>
+      </div>
+      <div class="feature-card reveal" style="transition-delay:0.4s">
+        <div class="feature-icon" style="background:#ecfdf5">📚</div>
+        <div class="feature-title">Learn Mode</div>
+        <p class="feature-desc">Practice and improve your sign language skills with guided exercises, instant feedback on your form, and a full ASL/BSL reference dictionary.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section id="demo" class="demo-bg">
+  <div class="section-wrap">
+    <div class="section-header reveal">
+     
+      <h2 class="section-title">Try the <span class="hl">interactive demo</span></h2>
+      <p class="section-sub">Click letters to build a word, or tap a preset phrase to see sign language in action!</p>
+    </div>
+
+    <div class="demo-container">
+      <div class="demo-left reveal">
+        <div style="margin-bottom:1rem">
+          <div class="demo-output-label">📝 Quick Phrases</div>
+          <div class="phrase-buttons">
+            <button class="phrase-btn" onclick="setPhrase('Hello! Nice to meet you 👋')">Hello!</button>
+            <button class="phrase-btn" onclick="setPhrase('Thank you very much 🙏')">Thank you</button>
+            <button class="phrase-btn" onclick="setPhrase('Please help me 🆘')">Help me</button>
+            <button class="phrase-btn" onclick="setPhrase('I love you ❤️')">I love you</button>
+            <button class="phrase-btn" onclick="setPhrase('Good morning! ☀️')">Good morning</button>
+            <button class="phrase-btn" onclick="setPhrase('How are you? 😊')">How are you?</button>
+            <button class="phrase-btn" onclick="setPhrase('My name is... ✍️')">My name is</button>
+            <button class="phrase-btn" onclick="setPhrase('See you later! 👋')">See you later</button>
+          </div>
+        </div>
+
+        <div style="margin-bottom:1rem">
+          <div class="demo-output-label">🔤 Spell it out — click letters</div>
+          <div class="alphabet-grid" id="alphaGrid"></div>
+        </div>
+
+        <div class="demo-output">
+          <div>
+            <div class="demo-output-label">💬 Translation Output</div>
+            <div class="demo-output-text" id="demoOutput">Start clicking letters or phrases above!</div>
+          </div>
+          <div class="demo-actions-row">
+            <button class="demo-action-btn speak-btn" onclick="speakDemo()">🔊 Speak</button>
+            <button class="demo-action-btn clear-btn" onclick="clearDemo()">🗑 Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-right reveal" style="transition-delay:0.15s">
+        <div class="sign-display" id="signDisplay">
+          <span class="sign-placeholder">👆 Click a letter to see its hand sign</span>
+        </div>
+
+        <div class="asl-info-card">
+          <div class="asl-info-title">📖 Did you know?</div>
+          <div class="asl-facts">
+            <div class="asl-fact">👐 ASL has its own grammar — different from English</div>
+            <div class="asl-fact">🌍 Over 500,000 people use ASL in the US</div>
+            <div class="asl-fact">✋ Handshape, movement & location all carry meaning</div>
+            <div class="asl-fact">😊 Facial expressions are part of ASL grammar</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section id="languages">
+  <div class="section-wrap">
+    <div class="section-header reveal">
+      <div class="section-tag" style="color:var(--teal)">🌍 Global</div>
+      <h2 class="section-title">Sign languages <span class="hl">around the world</span></h2>
+      <p class="section-sub">SignBridge supports  sign languages and counting. More coming every month!</p>
+    </div>
+    <div class="lang-grid">
+      <div class="lang-card reveal">
+        <span class="lang-flag">🇺🇸</span>
+        <div class="lang-name">ASL</div>
+        <div class="lang-users">American Sign Language</div>
+        <span class="lang-tag" style="background:#dbeafe;color:var(--primary)">Available</span>
+      </div>
+      
+    </div>
+  </div>
+</section>
+
+
+
+
+
+<section class="cta-section">
+  <div class="cta-card reveal">
+    <span class="cta-emoji">🤟</span>
+    <h2 class="cta-title">Ready to start talking?</h2>
+    <p class="cta-sub">Join over 200,000 people who use SignBridge to communicate, connect, and be understood. It's free, private, and works right in your browser.</p>
+    <div class="cta-btns">
+      <a href="#demo" class="btn-white">🚀 Start for Free</a>
+      <a href="#features" class="btn-ghost">📖 Learn More</a>
+    </div>
+  </div>
+</section>
+
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <a href="#" class="footer-logo-wrap">
+        <div class="footer-logo-icon">🤟</div>
+       SignBridge
+      </a>
+      <p class="footer-brand-desc">Making communication accessible for everyone. Real-time sign language interpretation powered by AI — free, private, and friendly.</p>
+      
+    </div>
+    <div>
+      <div class="footer-col-title">Product</div>
+      <ul class="footer-links">
+        <li><a href="#how">How It Works</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#demo">Live Demo</a></li>
+        <li><a href="#languages">Languages</a></li>
+        <li><a href="#">Download App</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-col-title">Learn</div>
+      <ul class="footer-links">
+        <li><a href="#">ASL Dictionary</a></li>
+        <li><a href="#">BSL Dictionary</a></li>
+        <li><a href="#">Lessons</a></li>
+        <li><a href="#">Blog</a></li>
+        <li><a href="#">Research</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-col-title">Support</div>
+      <ul class="footer-links">
+        <li><a href="#">Help Center</a></li>
+        <li><a href="#">Contact Us</a></li>
+        <li><a href="#">Privacy Policy</a></li>
+        <li><a href="#">Accessibility</a></li>
+        <li><a href="#">Open Source</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 SignBridge. Made with  for the deaf community.</span>
+    <span> Your camera data never leaves your device.</span>
+  </div>
+</footer>
+
+
+<div class="toast" id="toast">
+  <span id="toast-msg">✅ Done!</span>
+</div>
+
+<script>
+  
+  const aslSigns = {
+    A: { emoji: '✊', desc: 'Closed fist, thumb on side' },
+    B: { emoji: '🤚', desc: 'Flat hand, fingers together' },
+    C: { emoji: '🤌', desc: 'Curved hand like letter C' },
+    D: { emoji: '👆', desc: 'Index finger up, others curve' },
+    E: { emoji: '🤘', desc: 'Bent fingers, thumb tucked' },
+    F: { emoji: '👌', desc: 'OK sign, other fingers up' },
+    G: { emoji: '👈', desc: 'Index and thumb pointing' },
+    H: { emoji: '🫵', desc: 'Two fingers pointing sideways' },
+    I: { emoji: '🤙', desc: 'Pinky finger extended' },
+    J: { emoji: '🤙', desc: 'Pinky traces J in air' },
+    K: { emoji: '✌️', desc: 'Index and middle up, spread' },
+    L: { emoji: '🤟', desc: 'L-shape with index and thumb' },
+    M: { emoji: '✊', desc: 'Fist with thumb between fingers' },
+    N: { emoji: '✊', desc: 'Thumb between index & middle' },
+    O: { emoji: '👌', desc: 'All fingers form an O' },
+    P: { emoji: '🤞', desc: 'K sign pointing downward' },
+    Q: { emoji: '👇', desc: 'G sign pointing downward' },
+    R: { emoji: '🤞', desc: 'Index and middle crossed' },
+    S: { emoji: '✊', desc: 'Fist, thumb over fingers' },
+    T: { emoji: '✊', desc: 'Thumb between index & fist' },
+    U: { emoji: '✌️', desc: 'Index and middle together, up' },
+    V: { emoji: '✌️', desc: 'Two fingers spread in V' },
+    W: { emoji: '🖖', desc: 'Three fingers spread up' },
+    X: { emoji: '☝️', desc: 'Index finger hooked' },
+    Y: { emoji: '🤙', desc: 'Thumb and pinky extended' },
+    Z: { emoji: '☝️', desc: 'Index traces Z in air' }
+  };
+
+ 
+  const grid = document.getElementById('alphaGrid');
+  let demoText = '';
+
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(letter => {
+    const btn = document.createElement('button');
+    btn.className = 'alpha-btn';
+    btn.textContent = letter;
+    btn.onclick = () => {
+      demoText += letter;
+      document.getElementById('demoOutput').textContent = demoText;
+      showSign(letter);
+     
+      btn.classList.add('active');
+      setTimeout(() => btn.classList.remove('active'), 200);
+    };
+    grid.appendChild(btn);
+  });
+
+  function showSign(letter) {
+    const sign = aslSigns[letter];
+    if (!sign) return;
+    const display = document.getElementById('signDisplay');
+    display.innerHTML = `
+      <span class="sign-emoji">${sign.emoji}</span>
+      <span class="sign-letter">${letter}</span>
+      <div class="sign-name">ASL for "${letter}"</div>
+      <div style="font-size:0.82rem;color:var(--text-soft);text-align:center;max-width:200px">${sign.desc}</div>
+    `;
+  }
+
+  function setPhrase(phrase) {
+    demoText = phrase;
+    document.getElementById('demoOutput').textContent = phrase;
+    showToast(' Phrase loaded!');
+  }
+
+  function speakDemo() {
+    const text = document.getElementById('demoOutput').textContent;
+    if (!text || text === 'Start clicking letters or phrases above!') {
+      showToast(' Type something first!');
+      return;
+    }
+    if ('speechSynthesis' in window) {
+      const u = new SpeechSynthesisUtterance(text.replace(/[^\w\s,.!?']/g, ''));
+      u.rate = 0.95;
+      u.pitch = 1.05;
+      speechSynthesis.speak(u);
+      showToast(' Speaking !');
+    } else {
+      showToast('🔊 Speech not supported in this browser');
+    }
+  }
+
+  function clearDemo() {
+    demoText = '';
+    document.getElementById('demoOutput').textContent = 'Start clicking letters or phrases above!';
+    document.getElementById('signDisplay').innerHTML = '<span class="sign-placeholder">👆 Click a letter to see its hand sign</span>';
+    showToast('🗑 Cleared!');
+  }
+
+  // ── HERO ANIMATION ──
+  const heroHands = ['🤟', '🤙', '✌️', '🖐️', '👌', '🤞', '🤘', '👋', '🙌', '👐'];
+  const heroTranslations = [
+    '<span class="word">Hello, </span><span class="word">how </span><span class="word">are </span><span class="word">you? 😊</span>',
+    '<span class="word">Nice </span><span class="word">to </span><span class="word">meet </span><span class="word">you! 🤝</span>',
+    '<span class="word">Thank </span><span class="word">you </span><span class="word">very </span><span class="word">much 🙏</span>',
+    '<span class="word">I </span><span class="word">love </span><span class="word">you ❤️</span>',
+    '<span class="word">Good </span><span class="word">morning </span><span class="word">everyone! ☀️</span>',
+  ];
+  let heroIdx = 0;
+
+  setInterval(() => {
+    heroIdx = (heroIdx + 1) % heroTranslations.length;
+    document.getElementById('heroHand').textContent = heroHands[heroIdx % heroHands.length];
+    document.getElementById('heroTranslation').innerHTML = heroTranslations[heroIdx];
+  }, 3000);
+
+ 
+  let confTarget = 97;
+  setTimeout(() => {
+    document.getElementById('confFill').style.width = confTarget + '%';
+  }, 800);
+
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) e.target.classList.add('visible');
+    });
+  }, { threshold: 0.12 });
+  reveals.forEach(r => observer.observe(r));
+
+
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
+ 
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const t = document.querySelector(a.getAttribute('href'));
+      if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth' }); }
+    });
+  });
+</script>
+</body>
+</html>
